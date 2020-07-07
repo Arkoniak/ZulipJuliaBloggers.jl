@@ -3,9 +3,9 @@ using ZulipJuliaBloggers
 include("configuration.jl")
 
 try
-    const db = getdb(JBDB)
-    const zulip = ZulipClient(email = EMAIL, apikey = API_KEY, ep = ZULIP_EP)
-    const posts = ZulipJuliaBloggers.getposts()
+    db = getdb(JBDB)
+    zulip = ZulipClient(email = EMAIL, apikey = API_KEY, ep = ZULIP_EP)
+    posts = ZulipJuliaBloggers.getposts()
 
     newposts = 0
     updated = 0
