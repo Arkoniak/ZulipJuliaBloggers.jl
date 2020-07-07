@@ -164,7 +164,7 @@ end
 
 function process(x::Post, db, zulip; to = "blogs", type = "stream")
     st, msg_id, title = status(db, x)
-    st == "known" && return
+    st == "known" && return st
     topic, msg = blogpost(x)
     if st == "new"
         res = sendMessage(zulip; to = to, type = type, topic = topic, content = msg)
@@ -181,4 +181,6 @@ function process(x::Post, db, zulip; to = "blogs", type = "stream")
             @error "Get bad response from zulip server: $res"
         end
     end
+
+    return st
 end
