@@ -11,7 +11,7 @@ try
     updated = 0
 
     for post in reverse(posts)
-        st = process(post, db, zulip)
+        st = process(post, db, zulip; max_size = MAX_SIZE)
         newposts += st == "new"
         updated += st == "update"
     end

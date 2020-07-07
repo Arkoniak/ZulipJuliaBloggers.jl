@@ -82,3 +82,13 @@ function invalidate_post(db, x::Post)
     stmt = SQLite.Stmt(db, query)
     DBInterface.execute(stmt, (x.guid, ))
 end
+
+function invalidate_all_posts(db)
+    query = """
+    UPDATE posts
+    SET body = ""
+    """
+
+    stmt = SQLite.Stmt(db, query)
+    DBInterface.execute(stmt)
+end

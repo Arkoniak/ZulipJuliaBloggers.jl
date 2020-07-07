@@ -38,7 +38,7 @@ function getposts()
     return posts
 end
 
-function html2md(x::HTMLText, io, list)
+function html2md(x::HTMLText, io, list, max_size)
     print(io, x.text)
 
     return io
@@ -58,7 +58,7 @@ function html2md(x, io = IOBuffer(), list = "", max_size = 3000)
     elseif tag(x) == :p
         # Paragraph
         for child in x.children
-            io = html2md(child, io, list)
+            io = html2md(child, io, list, max_size)
             if io.ptr > max_size
                 break
             else
@@ -69,7 +69,7 @@ function html2md(x, io = IOBuffer(), list = "", max_size = 3000)
         print(io, "\n\n")
     elseif tag(x) == :ul
         for child in x.children
-            io = html2md(child, io, "ul")
+            io = html2md(child, io, "ul", max_size)
             if io.ptr > max_size
                 break
             else
@@ -82,7 +82,7 @@ function html2md(x, io = IOBuffer(), list = "", max_size = 3000)
         # In the future, here should be if/else for different kinds of list (numbered, unnumbered, nested)
         print(io, "+ ")
         for child in x.children
-            io = html2md(child, io, "")
+            io = html2md(child, io, "", max_size)
             if io.ptr > max_size
                 break
             else
@@ -100,7 +100,7 @@ function html2md(x, io = IOBuffer(), list = "", max_size = 3000)
     elseif tag(x) == :strong
         print(io, "**")
         for child in x.children
-            io = html2md(child, io, "")
+            io = html2md(child, io, "", max_size)
             if io.ptr > max_size
                 break
             else
@@ -113,7 +113,7 @@ function html2md(x, io = IOBuffer(), list = "", max_size = 3000)
         print(io, "\n\n**", uppercase(nodeText(x)), "**\n\n")
     elseif tag(x) == :body
         for child in x.children
-            io = html2md(child, io, list)
+            io = html2md(child, io, list, max_size)
             if io.ptr > max_size
                 break
             else
@@ -123,7 +123,7 @@ function html2md(x, io = IOBuffer(), list = "", max_size = 3000)
         io.ptr = ptr
     else
         for child in x.children
-            io = html2md(child, io, list)
+            io = html2md(child, io, list, max_size)
             if io.ptr > max_size
                 break
             else
@@ -137,14 +137,14 @@ function html2md(x, io = IOBuffer(), list = "", max_size = 3000)
     return io
 end
 
-function blogpost(x)
+function blogpost(x; max_size = 3000)
     io = IOBuffer()
     print(io, "[", x.title ,"](", x.link ,")\n")
     pubdate = Dates.format(x.pubdate, "eee, dd uuu yyyy HH:MM:SS")
     print(io, "Published on $pubdate\n\n")
 
     body = @_ x.body |> parsehtml |> __.root |> matchFirst(sel"body", __)
-    iobody = html2md(body)
+    iobody = html2md(body, IOBuffer(), "", max_size)
     ptr = iobody.ptr
     iscomplete = ptr == iobody.size + 1
     msg = take!(iobody)[1:(ptr - 1)] |> String
@@ -162,10 +162,10 @@ function blogpost(x)
     return (topic = x.title, msg = msg)
 end
 
-function process(x::Post, db, zulip; to = "blogs", type = "stream")
+function process(x::Post, db, zulip; to = "blogs", type = "stream", max_size = 3000)
     st, msg_id, title = status(db, x)
     st == "known" && return st
-    topic, msg = blogpost(x)
+    topic, msg = blogpost(x; max_size = max_size)
     if st == "new"
         res = sendMessage(zulip; to = to, type = type, topic = topic, content = msg)
         if get(res, :result, "fail") == "success"
@@ -176,7 +176,7 @@ function process(x::Post, db, zulip; to = "blogs", type = "stream")
     else # st == "update"
         res = updateMessage(zulip, msg_id; to = to, type = type, content = msg, topic = title)
         if get(res, :result, "fail") == "success"
-            update!(db, posts[1])
+            update!(db, x)
         else
             @error "Get bad response from zulip server: $res"
         end
