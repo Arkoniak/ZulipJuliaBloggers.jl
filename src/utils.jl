@@ -27,7 +27,7 @@ function Post(item)
 end
 
 function getposts()
-    xroot = @_ HTTP.get("https://www.juliabloggers.com/feed/";
+    xroot = @_ HTTP.get("https://www.juliabloggers.com/feed/", ["cache-control" => "max-age=0"];
                         require_ssl_verification = false) |>
             String(__.body) |> parse_string |> root
 
