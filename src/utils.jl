@@ -54,7 +54,11 @@ function html2md(x, io = IOBuffer(), list = "", max_size = 3000)
         print(io, "`", nodeText(x), "`")
     elseif tag(x) == :a
         # Link
-        print(io, "[", nodeText(x), "](", x.attributes["href"], ")")
+        if haskey(x.attributes, "href")
+            print(io, "[", nodeText(x), "](", x.attributes["href"], ")")
+        else
+            print(io, nodeText(x))
+        end
     elseif tag(x) == :p
         # Paragraph
         for child in x.children

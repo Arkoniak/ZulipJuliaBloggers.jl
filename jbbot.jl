@@ -21,7 +21,7 @@ try
     @info "Updated: $updated"
 catch err
     # This one is needed for telegram notification
-    @error err
+    @error "$MSG_PREFIX" err
     # This one goes to logs
     rethrow()
 end
